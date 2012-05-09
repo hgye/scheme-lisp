@@ -722,22 +722,54 @@
 
 (define y-combinator
   (lambda (f)
-    ((lambda (f)
-       (f f))
-     (f (lambda (x) (x x))))))
+    ((lambda (g)
+       (g g))
+     (lambda (h)
+       (f (lambda (x) ((h h) x)))))))
+
+(define Y
+  (lambda (f)
+    ((lambda (g) (g g))
+     (lambda (h)
+       (lambda (arg)
+         ((f (h h)) arg))))))
+
+;; Y's para is func: f
+;; f's para is (h h)
+
+(define Y
+  (lambda (f)
+    ((lambda (g)
+       (f (lambda (arg) ((g g) arg))))
+     (lambda (g)
+       (f (lambda (arg) ((g g) arg)))))))
+
+(define Y
+  (lambda (f)
+    ((lambda (x) (f (lambda (v) ((x x) v))))
+     (lambda (x) (f (lambda (v) ((x x) v)))))))
+    
 
 (define fact
-  (lambda (n)
-    (y-combinator
-     (lambda (x)
-       ((lambda (f) (f f m))
-        (x (lambda (x m)
-             (if (= m 0)
-                 1
-                 (* (x x (- m 1)))))))))
-    n))
-
+  (Y
+   (lambda (fact-YC)
+     (lambda (n)
+       (cond
+        ((= 0 n) 1)
+        (else
+         (* n (fact-YC (- n 1)))))))))
 
 (fact 3)
-                 
+
+(define length
+  (Y (lambda (lg)
+       (lambda (l)
+         (cond
+          ((null? l) 0)
+          (else
+           (+ 1 (lg (cdr l)))))))))
+
+(length '(1 2))
+(length '(1 2 3))
+(length '(1 2 3 4))
 
