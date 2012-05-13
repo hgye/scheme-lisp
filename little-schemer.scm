@@ -662,6 +662,7 @@
 (shuffle '(a b c))
 (shuffle '((a b) c))
 (shuffle '(a (c d)))
+(shuffle '((a b) (c d)))
 
 
 ; can't define in language, turning, The Halting Problem
@@ -773,3 +774,74 @@
 (length '(1 2 3))
 (length '(1 2 3 4))
 
+
+
+(((lambda (length)
+   (lambda (l)
+     (cond ( (null? l) 0)
+           (else (add1 (length (cdr l)))))))
+ eternity)
+ '() )
+
+(((lambda (f)
+   (lambda (l)
+     (cond
+      (( null? l) 0)
+      (else (add1 (f (cdr l)))))))
+ ((lambda (g)
+    (lambda (l)
+      (cond
+       (( null? l) 0)
+       (else (add1 (g (cdr l)))))))
+  eternity))
+ '(1))
+
+(
+ ((lambda (mk-length)
+    (mk-length
+     (mk-length
+      (mk-length eternity))))
+  (lambda (length)
+    (lambda (l)
+      (cond ((null? l) 0)
+            (else (add1 (length (cdr l))))))))
+ '(1 2))
+
+((lambda (mk-length)
+   (mk-length mk-length))
+ (lambda (mk-length)
+   (lambda (l)
+     (cond ((null? l) 0)
+           (else (add1
+                  (mk-length (cdr l))))))))
+
+
+((lambda (mk-length)
+   (mk-length mk-length))
+ (lambda (mk-length)
+   ((lambda (length)
+      (lambda (l)
+        (cond ((null? l) 0)
+              (else (addl (length (cdr l)))))))
+    (mk-length mk-length))))
+
+
+((lambda (length)
+   (lambda (l)
+     (cond
+      (( null? l) 0)
+      (else (add1 (length (cdr l)))))))
+ ((lambda (mk-length)
+    ((lambda (length)
+       (lambda (l)
+         (cond
+          ((null? l) 0)
+          (else (add1 (length (cdr l)))))))
+     (mk-length mk-length)))
+  (lambda (mk-length)
+    ((lambda (length)
+       (lambda (l)
+         (cond
+          (( null? l) 0)
+          (else (add1 (length (cdr l)))))))
+     (mk-length mk-length)))))
