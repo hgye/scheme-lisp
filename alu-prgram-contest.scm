@@ -62,6 +62,13 @@
 
 ;; (l-after-a 'a '(b c a b c))
 
+(define sumofl
+  (lambda (l)
+    (cond
+     ((null? (car l)) 0)
+     ((null? (cdr l)) (car l))
+     (else (+ (car l) (sumofl (cdr l)))))))
+
 (define lol-intersect-a
   (lambda (a l)
     (cond
@@ -74,39 +81,108 @@
 ;(lol-intersect-a '1 '((1 2 3) ( 2 4 1 2 5) (1 2 7 6)))
 
 (define l1-intersect-rest
-  (lambda (l1 l2)
+  (lambda (lat lol)
     (cond
-     ((null? l1) '())
-     ((null? (cdr l1)) (lol-intersect-a (car l1) l2))
-     ((null? (lol-intersect-a (car l1) l2))
-      (l1-intersect-rest (cdr l1) l2))
+     ((null? lat) '())
+     ((null? (cdr lat)) (lol-intersect-a (car lat) lol))
+     ((null? (lol-intersect-a (car lat) lol))
+      (l1-intersect-rest (cdr lat) lol))
      (else
-      (union (lol-intersect-a (car l1) l2)
-             (l1-intersect-rest (cdr l1) l2))))))
+      (union (lol-intersect-a (car lat) lol)
+             (l1-intersect-rest (cdr lat) lol))))))
 
-;;(l1-intersect-rest '(4 3 2 5 1) '((4 2 5 1 3) (5 1 2 4 3)))
+;;(lat-intersect-rest '(4 3 2 5 1) '((4 2 5 1 3) (5 1 2 4 3)))
 
-(define sumofl
-  (lambda (l)
-    (cond
-     ((null? (car l)) 0)
-     ((null? (cdr l)) (car l))
-     (else (+ (car l) (sumofl (cdr l)))))))
 
-(define find-seq-packet
+
+(define find-reg-packet
   (lambda (nb-packet seql)
     ;;parameter check
     (sumofl (l1-intersect-rest (car seql) seql))))
 
-(find-seq-packet '5 '((4 3 2 5 1)
+(find-reg-packet '5 '((4 3 2 5 1)
                       (4 2 5 1 3)
                       (5 1 2 4 3)))
 
 
-(find-seq-packet '6 '((4 3 2 6 5 1)
+(find-reg-packet '6 '((4 3 2 6 5 1)
                       (4 2 5 6 1 3)
                       (5 1 2 6 4 3)))
 
-(find-seq-packet '6 '((4 3 2 6 5 1)
+(find-reg-packet '6 '((4 3 2 6 5 1)
                       (4 2 5 6 1 3)
                       (5 1 6 2 4 3)))
+
+;; version two, use a natural recursive way
+(define intersect-lol
+  (lambda (lat lol)
+    (cond
+     ((null? lat) '())
+     ((null? (cdr lat)) lat)
+     (else
+      (letrec ((func (lambda (a)
+                    (lambda (intersection-internal)
+                      (intersection (l-after-a a (car lol))
+                                    (intersect-internal a (cdr lol)))))))
+            (union (func (car lat)) (intersect-lol (cdr lat) lol)))
+      ))))
+
+(intersect-lol '(4 3 2 5 1) '((4 3 2 5 1)
+                              (4 2 5 1 3)
+                              (5 1 2 4 3)))
+
+(define find-reg-packet-v2
+  (lambda (seqlol)
+    (cond
+     ((null? seqlol) '())
+     ((list? (car seqlol))
+      (union (intersect-internal (car seqlol) seqlol) (find-seq-packet-v2 (cdr seqlol))))
+     (else
+      ;;      (find-reg-packet-v2 (cdr seqlol))))))
+      '()))))
+
+(find-reg-packet-v2 '((4 3 2 5 1)
+                      (4 2 5 1 3)
+                      (5 1 2 4 3)))
+
+(find-reg-packet-v2 '((4 3 2 6 5 1)
+                      (4 2 5 6 1 3)
+                      (5 1 2 6 4 3)))
+
+(find-reg-packet-v2 '((4 3 2 6 5 1)
+                      (4 2 5 6 1 3)
+                      (5 1 6 2 4 3)))
+
+;; use map function
+(define intersection-lol
+  (lambda (lol)
+    (cond
+     ((null? lol) '())
+     ((null? (cdr lol)) (car lol))
+     (else
+      (intersection (car lol) (intersection-lol (cdr lol)))))))
+
+(define union-lol
+  (lambda (lol)
+    (cond
+     ((null? lol) '())
+     (else
+      (union (car lol) (union-lol (cdr lol)))))))
+
+(define find-reg-packet-map-v3
+  (lambda (seqlol)
+        ;;    (map (lambda (a) (lol-intersect-a a seqlol)) (car seqlol))))
+    (union-lol
+     (map (lambda (a)
+            (intersection-lol
+             (map (lambda (l)
+                       (l-after-a a l)) seqlol)
+                )) (car seqlol)))))
+
+(find-reg-packet-map-v3 '((1 2 3 4 5)
+                          (1 2 3 4 5)
+                          (1 2 3 4 5)))
+
+(find-reg-packet-map-v3 '((4 3 2 6 5 1)
+                          (4 2 5 6 1 3)
+                          (5 1 6 2 4 3)))
